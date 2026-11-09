@@ -1,0 +1,26 @@
+{
+  "name": "globaltrade-fx-risk-simulator",
+  "version": "1.0.0",
+  "description": "Multi-tier maritime import trade finance cash flow engine and foreign exchange (USD/BRL PTAX) volatility risk simulator.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/**/*.test.js || tsc && node --test",
+    "simulate": "node dist/index.js"
+  },
+  "keywords": [
+    "trade-finance",
+    "fx-risk",
+    "supply-chain",
+    "logistics",
+    "ptax",
+    "import-financing",
+    "typescript"
+  ],
+  "author": "Wenderson Werneck",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.11.0"
+  }
+}
