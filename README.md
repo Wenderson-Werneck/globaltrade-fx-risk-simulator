@@ -59,6 +59,7 @@ flowchart TD
 1. **Clean Commercial Base Isolation:** Intermediary repass margins (e.g. 5%) are strictly calculated against net commercial commodity value, preventing double-counting on freight, demurrage, or port insurance.
 2. **Container Equivalent Normalization:** Automatically converts mixed container fleets (20ft standard vs 40ft high cube) into standardized TEU equivalents.
 3. **PTAX Volatility Stress-Testing:** Simulates total BRL cash outflow under base, favorable, and currency-shock (+8% depreciation) market conditions.
+4. **Append-Only Payment Audit Ledger (`AppendOnlyPaymentAuditLedger`):** Records `PAY_NOW_ACTIVATED`, `PAY_NOW_RESET`, and `PAYMENT_SETTLED` as immutable events for full compliance traceability, preserving true due-date `daysUntilDue` while raising pre-document contract warnings when shipping documents are pending.
 
 ---
 
@@ -80,10 +81,11 @@ node --test dist/**/*.test.js
 
 *Test Execution:*
 ```text
-✔ GlobalTradeFinanceEngine: correctly calculates landed cost and milestones (1.63ms)
-✔ GlobalTradeFinanceEngine: computes stress PTAX currency exposure accurately (0.22ms)
-ℹ tests 2
-ℹ pass 2
+✔ GlobalTradeFinanceEngine: correctly calculates landed cost and milestones
+✔ GlobalTradeFinanceEngine: computes stress PTAX currency exposure accurately
+✔ AppendOnlyPaymentAuditLedger: preserves due-date diffDays and supports audit-compliant reset
+ℹ tests 3
+ℹ pass 3
 ℹ fail 0
 ```
 

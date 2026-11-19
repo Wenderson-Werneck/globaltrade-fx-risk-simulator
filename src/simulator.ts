@@ -1,4 +1,11 @@
-import { ImportOperationInput, TradeFinanceAnalysis, PaymentInstallment, FXScenario } from "./types.js";
+import {
+  ImportOperationInput,
+  TradeFinanceAnalysis,
+  PaymentInstallment,
+  FXScenario,
+  PaymentAuditEvent,
+  PaymentStatusProjection,
+} from "./types.js";
 
 export class GlobalTradeFinanceEngine {
   /**
@@ -94,6 +101,67 @@ export class GlobalTradeFinanceEngine {
       landedCostPerTonUsd: Number(landedCostPerTonUsd.toFixed(2)),
       installments,
       fxScenarios,
+    };
+  }
+}
+
+export class AppendOnlyPaymentAuditLedger {
+  private readonly events: PaymentAuditEvent[] = [];
+
+  public append(event: PaymentAuditEvent): ReadonlyArray<PaymentAuditEvent> {
+    if (!event.eventId || !event.actor || !event.operationRef) {
+      throw new Error("INVALID_AUDIT_EVENT: eventId, operationRef, and actor are mandatory.");
+    }
+    this.events.push({ ...event });
+    return this.getHistory(event.operationRef, event.installmentNumber);
+  }
+
+  public getHistory(operationRef: string, installmentNumber: number): ReadonlyArray<PaymentAuditEvent> {
+    return this.events
+      .filter((e) => e.operationRef === operationRef && e.installmentNumber === installmentNumber)
+      .map((e) => ({ ...e }));
+  }
+
+  /**
+   * Projects current installment status from immutable audit events while strictly
+   * preserving real due-date diffDays and surfacing pre-document contract warnings.
+   */
+  public projectStatus(
+    operationRef: string,
+    installmentNumber: number,
+    dueDateIso: string,
+    referenceDateIso: string,
+    hasShippingDocuments: boolean
+  ): PaymentStatusProjection {
+    const trail = this.getHistory(operationRef, installmentNumber);
+    let isPayNowActive = false;
+    let isSettled = false;
+
+    for (const evt of trail) {
+      if (evt.type === "PAY_NOW_ACTIVATED") {
+        isPayNowActive = true;
+      } else if (evt.type === "PAY_NOW_RESET") {
+        isPayNowActive = false;
+      } else if (evt.type === "PAYMENT_SETTLED") {
+        isSettled = true;
+        isPayNowActive = false;
+      }
+    }
+
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const dueUtc = Date.parse(dueDateIso);
+    const refUtc = Date.parse(referenceDateIso);
+    const daysUntilDue = Math.round((dueUtc - refUtc) / msPerDay);
+
+    return {
+      operationRef,
+      installmentNumber,
+      isPayNowActive,
+      isSettled,
+      daysUntilDue,
+      preDocContractWarning: isPayNowActive && !hasShippingDocuments,
+      auditTrailLength: trail.length,
+      lastEventType: trail.length > 0 ? trail[trail.length - 1].type : undefined,
     };
   }
 }

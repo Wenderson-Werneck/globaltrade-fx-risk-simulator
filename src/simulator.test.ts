@@ -2,7 +2,7 @@
 import test from "node:test";
 // @ts-ignore
 import assert from "node:assert/strict";
-import { GlobalTradeFinanceEngine } from "./simulator.js";
+import { GlobalTradeFinanceEngine, AppendOnlyPaymentAuditLedger } from "./simulator.js";
 import { ImportOperationInput } from "./types.js";
 
 test("GlobalTradeFinanceEngine: correctly calculates landed cost and milestones", () => {
@@ -57,4 +57,52 @@ test("GlobalTradeFinanceEngine: computes stress PTAX currency exposure accuratel
   assert.equal(stressScenario.exchangeRateBrlPerUsd, 5.94);
   assert.equal(stressScenario.totalCostBrl, 3207600);
   assert.equal(stressScenario.fxVarianceAgainstBaseBrl, 237600);
+});
+
+test("AppendOnlyPaymentAuditLedger: preserves due-date diffDays and supports audit-compliant reset", () => {
+  const ledger = new AppendOnlyPaymentAuditLedger();
+
+  ledger.append({
+    eventId: "AUD-001",
+    operationRef: "IMP-2026-CH-001",
+    installmentNumber: 2,
+    type: "PAY_NOW_ACTIVATED",
+    actor: "treasury_ops",
+    occurredAt: "2026-11-18T10:00:00Z",
+    reason: "Favorable FX window",
+  });
+
+  const active = ledger.projectStatus(
+    "IMP-2026-CH-001",
+    2,
+    "2026-11-28T00:00:00Z",
+    "2026-11-18T00:00:00Z",
+    false
+  );
+  assert.equal(active.isPayNowActive, true);
+  assert.equal(active.daysUntilDue, 10); // Preserves real due date diffDays
+  assert.equal(active.preDocContractWarning, true); // Warns when shipping docs not yet present
+  assert.equal(active.auditTrailLength, 1);
+
+  ledger.append({
+    eventId: "AUD-002",
+    operationRef: "IMP-2026-CH-001",
+    installmentNumber: 2,
+    type: "PAY_NOW_RESET",
+    actor: "finance_admin",
+    occurredAt: "2026-11-18T11:30:00Z",
+    reason: "Awaiting Bill of Lading verification",
+  });
+
+  const reset = ledger.projectStatus(
+    "IMP-2026-CH-001",
+    2,
+    "2026-11-28T00:00:00Z",
+    "2026-11-18T00:00:00Z",
+    false
+  );
+  assert.equal(reset.isPayNowActive, false);
+  assert.equal(reset.preDocContractWarning, false);
+  assert.equal(reset.auditTrailLength, 2); // Full immutable history preserved
+  assert.equal(reset.lastEventType, "PAY_NOW_RESET");
 });

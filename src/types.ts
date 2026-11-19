@@ -40,3 +40,26 @@ export interface TradeFinanceAnalysis {
   installments: PaymentInstallment[];
   fxScenarios: FXScenario[];
 }
+
+export type PaymentAuditEventType = "PAY_NOW_ACTIVATED" | "PAY_NOW_RESET" | "PAYMENT_SETTLED";
+
+export interface PaymentAuditEvent {
+  eventId: string;
+  operationRef: string;
+  installmentNumber: number;
+  type: PaymentAuditEventType;
+  actor: string;
+  occurredAt: string;
+  reason?: string;
+}
+
+export interface PaymentStatusProjection {
+  operationRef: string;
+  installmentNumber: number;
+  isPayNowActive: boolean;
+  isSettled: boolean;
+  daysUntilDue: number;
+  preDocContractWarning: boolean;
+  auditTrailLength: number;
+  lastEventType?: PaymentAuditEventType;
+}
