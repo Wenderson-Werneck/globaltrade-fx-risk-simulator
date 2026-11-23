@@ -17,12 +17,23 @@ ledger.append({
   reason: "Favorable USD/BRL PTAX window detected (-1.8% vs weekly avg)",
 });
 
+const MIME = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".svg": "image/svg+xml",
+};
+
 const server = http.createServer((req, res) => {
-  if (req.method === "GET" && (req.url === "/" || req.url === "/index.html")) {
-    const html = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
-    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end(html);
-    return;
+  const urlPath = (req.url || "/").split("?")[0];
+  if (req.method === "GET" && (urlPath === "/" || urlPath === "/index.html" || urlPath === "/styles.css" || urlPath === "/manual.css")) {
+    const file = urlPath === "/" ? "/index.html" : urlPath;
+    const full = path.join(__dirname, file);
+    if (fs.existsSync(full)) {
+      res.writeHead(200, { "Content-Type": MIME[path.extname(full)] || "application/octet-stream" });
+      res.end(fs.readFileSync(full));
+      return;
+    }
   }
 
   if (req.method === "POST" && req.url === "/api/simulate") {
