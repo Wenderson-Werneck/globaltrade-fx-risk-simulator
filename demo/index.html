@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GlobalTrade FX Risk Simulator — Live Demo</title>
+  <style>
+    :root {
+      --bg: #0b1120; --surface: #111827; --card: #161f32; --border: #243047;
+      --text: #f1f5f9; --muted: #94a3b8; --accent: #38bdf8;
+      --green: #10b981; --amber: #f59e0b; --red: #ef4444;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); padding: 24px; line-height: 1.45; }
+    .wrap { max-width: 1280px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; margin-bottom: 22px; border-bottom: 1px solid var(--border); }
+    .brand h1 { margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+    .brand p { margin: 3px 0 0; font-size: 0.84rem; color: var(--muted); }
+    .pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: rgba(56,189,248,0.12); color: var(--accent); border: 1px solid rgba(56,189,248,0.28); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+    .layout { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 18px; }
+    .card h2 { margin: 0 0 14px; font-size: 0.92rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); border-bottom: 1px solid var(--border); padding-bottom: 9px; }
+    label { display: block; font-size: 0.78rem; color: var(--muted); margin: 10px 0 4px; font-weight: 500; }
+    input, select { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 0.88rem; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn { width: 100%; margin-top: 16px; padding: 10px 14px; border: none; border-radius: 6px; background: var(--accent); color: #082f49; font-weight: 700; font-size: 0.86rem; cursor: pointer; }
+    .btn:hover { filter: brightness(1.06); }
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+    .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+    .kpi .lbl { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .kpi .val { font-size: 1.3rem; font-weight: 700; margin-top: 5px; font-variant-numeric: tabular-nums; }
+    .kpi .sub { font-size: 0.74rem; color: var(--muted); margin-top: 3px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+    th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); }
+    th { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .tag { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; }
+    .tag-best { background: rgba(16,185,129,0.14); color: var(--green); }
+    .tag-base { background: rgba(56,189,248,0.14); color: var(--accent); }
+    .tag-stress { background: rgba(239,68,68,0.14); color: var(--red); }
+    .warn-box { margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.35); color: #fcd34d; font-size: 0.82rem; font-weight: 500; }
+    .btn-row { display: flex; gap: 8px; margin-top: 12px; }
+    .btn-row button { flex: 1; margin-top: 0; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-weight: 600; font-size: 0.78rem; cursor: pointer; }
+    .btn-row button.primary { background: rgba(56,189,248,0.16); border-color: rgba(56,189,248,0.4); color: var(--accent); }
+    .btn-row button.ok { background: rgba(16,185,129,0.16); border-color: rgba(16,185,129,0.4); color: var(--green); }
+    .audit-meta { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; font-size: 0.82rem; }
+    .audit-log { margin-top: 10px; padding: 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.76rem; color: var(--muted); }
+    @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } .kpis { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <h1>GlobalTrade FX Risk Simulator</h1>
+        <p>Maritime Landed Cost Decomposition, PTAX Volatility Stress Testing &amp; Append-Only Payment Audit Ledger (Synthetic Data)</p>
+      </div>
+      <span class="pill"><span class="dot"></span> TypeScript Engine Live · 100% Mock Data</span>
+    </header>
+
+    <div class="layout">
+      <div class="card">
+        <h2>Operation Parameters</h2>
+        <label>Operation Reference</label>
+        <input id="operationRef" value="IMP-2026-EE-089" />
+        <label>Commodity Grade</label>
+        <input id="commodityName" value="Ferro-Silicon 75% (Synthetic Batch)" />
+
+        <div class="row">
+          <div>
+            <label>Cargo Mode</label>
+            <select id="cargoMode">
+              <option value="BULK">BULK</option>
+              <option value="CONTAINER">CONTAINER</option>
+            </select>
+          </div>
+          <div>
+            <label>Base PTAX (BRL/USD)</label>
+            <input id="basePtaxRate" type="number" step="0.01" value="5.80" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Volume (Metric Tons)</label>
+            <input id="metricTons" type="number" value="1500" />
+          </div>
+          <div>
+            <label>Unit Price (USD/t)</label>
+            <input id="pricePerTonUsd" type="number" value="1120" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Ocean Freight (USD)</label>
+            <input id="oceanFreightUsd" type="number" value="68000" />
+          </div>
+          <div>
+            <label>Marine Insurance (USD)</label>
+            <input id="insuranceUsd" type="number" value="4200" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Port Terminal Fees (USD)</label>
+            <input id="portTerminalFeesUsd" type="number" value="19500" />
+          </div>
+          <div>
+            <label>Repass Commission (%)</label>
+            <input id="intermediaryCommissionPct" type="number" step="0.1" value="3.5" />
+          </div>
+        </div>
+
+        <button class="btn" onclick="runSimulation()">Run Landed Cost &amp; FX Simulation</button>
+      </div>
+
+      <div>
+        <div class="kpis">
+          <div class="kpi"><div class="lbl">Commercial Base</div><div class="val" id="kpiComm">-</div><div class="sub">FOB net valuation</div></div>
+          <div class="kpi"><div class="lbl">Freight &amp; Port</div><div class="val" id="kpiLog">-</div><div class="sub">Ocean + insurance + terminal</div></div>
+          <div class="kpi"><div class="lbl">Total Landed Cost</div><div class="val" id="kpiTotal" style="color:var(--accent)">-</div><div class="sub">All-in USD exposure</div></div>
+          <div class="kpi"><div class="lbl">Landed Cost / MT</div><div class="val" id="kpiTon">-</div><div class="sub">Effective break-even</div></div>
+        </div>
+
+        <div class="card">
+          <h2>PTAX Exchange Rate Stress Scenarios (-4% / Base / +8%)</h2>
+          <table>
+            <thead>
+              <tr><th>Scenario</th><th>PTAX Rate</th><th>Total Outflow (BRL)</th><th>Cost / MT (BRL)</th><th>FX Variance vs Base</th></tr>
+            </thead>
+            <tbody id="fxTable"></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>Trade Finance Milestone Schedule (20% / 60% / 20%)</h2>
+          <table>
+            <thead>
+              <tr><th>Installment</th><th>Weight</th><th>Disbursement (USD)</th><th>Schedule</th><th>Trigger Event</th></tr>
+            </thead>
+            <tbody id="instTable"></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>Append-Only Payment Audit Ledger (Compliance Traceability)</h2>
+          <div class="row">
+            <div>
+              <label>Tracked Installment</label>
+              <select id="auditInst" onchange="refreshAudit()">
+                <option value="1">#1 — 20% Contract Signing</option>
+                <option value="2" selected>#2 — 60% Bill of Lading</option>
+                <option value="3">#3 — 20% Customs Clearance</option>
+              </select>
+            </div>
+            <div>
+              <label>Shipping Documents (B/L) Verified?</label>
+              <select id="hasDocs" onchange="refreshAudit()">
+                <option value="false" selected>No (Pre-Document Contract Stage)</option>
+                <option value="true">Yes (B/L Verified)</option>
+              </select>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="primary" onclick="sendAudit('PAY_NOW_ACTIVATED')">Activate Pay Now</button>
+            <button onclick="sendAudit('PAY_NOW_RESET')">Audit-Compliant Reset</button>
+            <button class="ok" onclick="sendAudit('PAYMENT_SETTLED')">Mark Settled</button>
+          </div>
+          <div id="auditStatus"></div>
+          <div class="audit-log" id="auditLog"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const fmtUsd = (v) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
+    const fmtBrl = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+
+    async function runSimulation() {
+      const input = {
+        operationRef: document.getElementById("operationRef").value,
+        commodityName: document.getElementById("commodityName").value,
+        cargoMode: document.getElementById("cargoMode").value,
+        metricTons: Number(document.getElementById("metricTons").value),
+        pricePerTonUsd: Number(document.getElementById("pricePerTonUsd").value),
+        oceanFreightUsd: Number(document.getElementById("oceanFreightUsd").value),
+        insuranceUsd: Number(document.getElementById("insuranceUsd").value),
+        portTerminalFeesUsd: Number(document.getElementById("portTerminalFeesUsd").value),
+        intermediaryCommissionPct: Number(document.getElementById("intermediaryCommissionPct").value),
+      };
+      const basePtaxRate = Number(document.getElementById("basePtaxRate").value);
+
+      const res = await fetch("/api/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input, basePtaxRate }),
+      });
+      const data = await res.json();
+      if (data.error) return alert(data.error);
+
+      document.getElementById("kpiComm").textContent = fmtUsd(data.commercialValueUsd);
+      document.getElementById("kpiLog").textContent = fmtUsd(data.totalFreightAndLogisticsUsd);
+      document.getElementById("kpiTotal").textContent = fmtUsd(data.totalLandedCostUsd);
+      document.getElementById("kpiTon").textContent = fmtUsd(data.landedCostPerTonUsd);
+
+      const tagMap = { BEST_CASE: "tag-best", BASE_EXPECTED: "tag-base", STRESS_DEPRECIATION: "tag-stress" };
+      document.getElementById("fxTable").innerHTML = data.fxScenarios
+        .map(
+          (s) => `<tr>
+            <td><span class="tag ${tagMap[s.scenarioName]}">${s.scenarioName}</span></td>
+            <td>R$ ${s.exchangeRateBrlPerUsd.toFixed(4)}</td>
+            <td><strong>${fmtBrl(s.totalCostBrl)}</strong></td>
+            <td>${fmtBrl(s.effectiveCostPerTonBrl)}</td>
+            <td style="color:${s.fxVarianceAgainstBaseBrl > 0 ? "var(--red)" : s.fxVarianceAgainstBaseBrl < 0 ? "var(--green)" : "var(--muted)"}">
+              ${s.fxVarianceAgainstBaseBrl > 0 ? "+" : ""}${fmtBrl(s.fxVarianceAgainstBaseBrl)}
+            </td>
+          </tr>`
+        )
+        .join("");
+
+      document.getElementById("instTable").innerHTML = data.installments
+        .map(
+          (i) => `<tr>
+            <td>#${i.installmentNumber}</td>
+            <td>${i.percentage}%</td>
+            <td><strong>${fmtUsd(i.amountUsd)}</strong></td>
+            <td>${i.dueDate}</td>
+            <td><code>${i.triggerEvent}</code></td>
+          </tr>`
+        )
+        .join("");
+
+      refreshAudit();
+    }
+
+    async function sendAudit(action) {
+      const res = await fetch("/api/audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          operationRef: document.getElementById("operationRef").value,
+          installmentNumber: document.getElementById("auditInst").value,
+          dueDateIso: "2026-12-10T00:00:00Z",
+          referenceDateIso: "2026-11-23T00:00:00Z",
+          hasShippingDocuments: document.getElementById("hasDocs").value === "true",
+        }),
+      });
+      renderAudit(await res.json());
+    }
+
+    async function refreshAudit() {
+      const res = await fetch("/api/audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          operationRef: document.getElementById("operationRef").value,
+          installmentNumber: document.getElementById("auditInst").value,
+          dueDateIso: "2026-12-10T00:00:00Z",
+          referenceDateIso: "2026-11-23T00:00:00Z",
+          hasShippingDocuments: document.getElementById("hasDocs").value === "true",
+        }),
+      });
+      renderAudit(await res.json());
+    }
+
+    function renderAudit({ status, history }) {
+      document.getElementById("auditStatus").innerHTML = `
+        <div class="audit-meta">
+          <span>Pay Now: <strong>${status.isPayNowActive ? "ACTIVE" : "INACTIVE"}</strong></span>
+          <span>Settled: <strong>${status.isSettled ? "YES" : "NO"}</strong></span>
+          <span>Real Due Delta: <strong>${status.daysUntilDue} days</strong></span>
+          <span>Immutable Events: <strong>${status.auditTrailLength}</strong></span>
+        </div>
+        ${status.preDocContractWarning ? '<div class="warn-box">PRE-DOC COMPLIANCE WARNING: Pay Now is active while Bill of Lading shipping documents are still unverified.</div>' : ""}
+      `;
+      document.getElementById("auditLog").innerHTML = history.length
+        ? history.map((e) => `[${e.occurredAt}] ${e.type} · actor=${e.actor} · reason="${e.reason || ""}"`).join("<br>")
+        : "No events recorded for this installment yet.";
+    }
+
+    runSimulation();
+  </script>
+</body>
+</html>

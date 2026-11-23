@@ -9,6 +9,21 @@
 
 ---
 
+## 🖥️ Interactive Visual Demo (1-Command Launch)
+
+![GlobalTrade FX Risk Simulator — Live Demo Preview](docs/preview.png)
+
+Launch the full interactive dashboard preloaded with **100% synthetic data** (zero external dependencies):
+
+```bash
+git clone https://github.com/Wenderson-Werneck/globaltrade-fx-risk-simulator.git
+cd globaltrade-fx-risk-simulator
+npm run demo
+# Open http://127.0.0.1:3000
+```
+
+---
+
 ## 📌 Executive Summary
 
 International commodity imports (industrial minerals, alloys, chemicals) operate on multi-million dollar cash flows spanning **60 to 90 days** between contract signing and warehouse arrival. During this period, procurement teams face two existential financial hazards:

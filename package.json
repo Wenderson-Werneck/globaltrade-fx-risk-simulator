@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "test": "node --test dist/**/*.test.js || tsc && node --test",
-    "simulate": "node dist/index.js"
+    "simulate": "node dist/index.js",
+    "demo": "node demo/server.cjs"
   },
   "keywords": [
     "trade-finance",
